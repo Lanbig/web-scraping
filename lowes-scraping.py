@@ -47,19 +47,20 @@ def reviews_scraping(url):
         review_titles = soup.find_all('h4', class_='reviews-list-quote grid-60 clearfix v-spacing-medium')
         reviews = soup.find_all('p', class_='reviews-helpful-text secondary-text v-spacing-medium')
         ratings = soup.find_all('meta', {'itemprop': 'ratingValue'})
+        dates = soup.find_all('small', class_="darkMidGrey")
 
         ext_review_titles = []
         ext_reviews = []
         ext_ratings = []
+        ext_dates = []
 
-        for item in zip(review_titles, ratings, reviews):
+        for item in zip(review_titles, ratings, reviews,dates):
             ext_review_titles.append(str(item[0].text).strip())
             ext_ratings.append(str(item[1]['content']).strip())
             ext_reviews.append(re.sub(r'\r', '',str(item[2].text).strip()))
-            # Matches Unicode whitespace characters (which includes [ \t\n\r\f\v],
-            # https://stackoverflow.com/questions/41896322/how-to-remove-all-kind-of-linebreaks-or-formattings-from-strings-in-python
+            ext_dates.append(str(item[3].text).strip()[12:])
 
-        return ext_review_titles, ext_ratings, ext_reviews
+        return ext_review_titles, ext_ratings, ext_reviews, ext_dates
 
     def product_review_number(soup):
         try:
@@ -84,11 +85,12 @@ def reviews_scraping(url):
     ext_review_titles = []
     ext_reviews = []
     ext_ratings = []
+    ext_dates = []
 
     if reviews_number == 0:
-        return ext_review_titles, ext_ratings, ext_reviews
+        return ext_review_titles, ext_ratings, ext_reviews, ext_dates
     else:
-        ext_review_titles, ext_ratings, ext_reviews = product_review_extract(soup)
+        ext_review_titles, ext_ratings, ext_reviews, ext_dates  = product_review_extract(soup)
 
         if reviews_number > 10:
             nloop = int(reviews_number / 10)
@@ -98,13 +100,14 @@ def reviews_scraping(url):
                 pp = product_review_request(urll)
                 soup = BeautifulSoup(pp.text, "html.parser")
 
-                x, y, z = product_review_extract(soup)
+                x, y, z, j = product_review_extract(soup)
 
                 ext_review_titles += x
                 ext_ratings += y
                 ext_reviews += z
+                ext_dates += j
 
-        return ext_review_titles, ext_ratings, ext_reviews
+        return ext_review_titles, ext_ratings, ext_reviews, ext_dates
 
 ### Main function ###
 
@@ -112,12 +115,15 @@ r = lowes_search('samsung+washer')
 titles, urls = product_list(r)
 
 for product_item in zip(titles, urls):
-    review_titles, ratings, reviews = reviews_scraping(product_item[1])
+    review_titles, ratings, reviews, dates = reviews_scraping(product_item[1])
 
     product_reviews = pd.DataFrame(
-        {'review_titles': review_titles,
-         'ratings': ratings,
-         'reviews': reviews
+        {'review_title': review_titles,
+         'rating': ratings,
+         'review': reviews,
+         'date': dates,
          })
 
-    product_reviews.to_csv('review_data/'+product_item[0]+'.csv', index=False)
+    product_reviews.to_csv('reviews_data/'+product_item[0]+'.csv', index=False)
+
+
