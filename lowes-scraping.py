@@ -1,3 +1,6 @@
+# Author : Ben Rodrawangpai
+# Date 8/30/2017
+# Fix - some comments don't show up - Bug from Lowes.com
 import requests
 import re
 from bs4 import BeautifulSoup
@@ -90,13 +93,16 @@ def reviews_scraping(url):
     if reviews_number == 0:
         return ext_review_titles, ext_ratings, ext_reviews, ext_dates
     else:
+
+        pp = product_review_request(url + '/reviews?sortMethod=SubmissionTime&sortDirection=desc')
+        soup = BeautifulSoup(pp.text, "html.parser")
         ext_review_titles, ext_ratings, ext_reviews, ext_dates  = product_review_extract(soup)
 
         if reviews_number > 10:
             nloop = int(reviews_number / 10)
 
             for i in range(nloop):
-                urll = (url + '/reviews?offset=' + str((i + 1) * 10))
+                urll = (url + '/reviews?sortMethod=SubmissionTime&sortDirection=desc&offset=' + str((i + 1) * 10))
                 pp = product_review_request(urll)
                 soup = BeautifulSoup(pp.text, "html.parser")
 
